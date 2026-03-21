@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deeptracer | Python 分析助手</title>
+    <meta
+        name="description"
+        content="直接粘贴 Python 代码，快速查看结构、性能、内存和更容易理解的修改建议。"
+    >
+    <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+</head>
+<body data-theme="mist">
+    <div class="page-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Python 分析助手</p>
+                <h1>把代码贴进来，然后开始分析</h1>
+                <p class="subtitle">不用先找文件，也不用调很多参数。先看懂代码，再决定要不要修改。</p>
+            </div>
+            <button class="ghost-button" id="themeToggle" type="button">切换配色</button>
+        </header>
+
+        <main class="layout">
+            <section class="panel editor-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>输入代码</h2>
+                        <p>支持直接粘贴 Python 代码，也可以先载入一个示例。</p>
+                    </div>
+                    <div class="button-row">
+                        <button class="ghost-button" id="loadSample" type="button">载入示例</button>
+                        <button class="ghost-button" id="clearCode" type="button">清空</button>
+                        <button class="primary-button" id="runAnalysis" type="button">分析代码</button>
+                    </div>
+                </div>
+
+                <label class="editor-box">
+                    <span>Python 代码</span>
+                    <textarea id="sourceCode" spellcheck="false" placeholder="把你的 Python 代码粘贴到这里..."></textarea>
+                </label>
+
+                <div class="helper-line">
+                    <span id="statusText">可以先点击“载入示例”，也可以直接粘贴你自己的代码。</span>
+                </div>
+            </section>
+
+            <section class="panel results-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>分析结果</h2>
+                        <p>先看概览，再切换到结构、性能或内存细节。</p>
+                    </div>
+                </div>
+
+                <div class="summary-grid" id="summaryCards"></div>
+
+                <div class="tab-row" id="resultTabs">
+                    <button class="is-active" data-tab="workflow" type="button">概览</button>
+                    <button data-tab="ast" type="button">结构</button>
+                    <button data-tab="performance" type="button">性能</button>
+                    <button data-tab="memory" type="button">内存</button>
+                </div>
+
+                <div class="lead-card" id="tabSummary"></div>
+                <div class="chart-card" id="tabBars"></div>
+                <div class="notes-card" id="tabPoints"></div>
+
+                <div class="section-divider"></div>
+
+                <div class="panel-header compact">
+                    <div>
+                        <h2>建议</h2>
+                        <p>这些建议的目标不是炫技，而是帮助你更容易看懂和改好代码。</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-list" id="suggestionList"></div>
+                <div class="detail-card" id="suggestionDetail"></div>
+
+                <div class="diff-card">
+                    <div class="diff-head">
+                        <div>
+                            <strong id="diffFile">当前代码</strong>
+                            <p id="diffNote">点击一条建议查看差异预览。</p>
+                        </div>
+                    </div>
+                    <div class="diff-lines" id="diffLines"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" hidden>
+        <div class="loading-dialog" role="status" aria-live="polite">
+            <div class="pixel-cat" aria-hidden="true">
+                <span class="cat-ear cat-ear-left"></span>
+                <span class="cat-ear cat-ear-right"></span>
+                <span class="cat-face"></span>
+                <span class="cat-eye cat-eye-left"></span>
+                <span class="cat-eye cat-eye-right"></span>
+                <span class="cat-nose"></span>
+                <span class="cat-tail"></span>
+                <span class="cat-paw cat-paw-left"></span>
+                <span class="cat-paw cat-paw-right"></span>
+            </div>
+            <p class="loading-title">代码还在分析中</p>
+            <p class="loading-copy" id="loadingText">像素猫正在巡检结构、性能和内存，请稍等一下。</p>
+        </div>
+    </div>
+
+    <noscript>请开启 JavaScript 以获得完整体验。</noscript>
+    <script src="{{ url_for('static', path='app.js') }}" defer></script>
+</body>
+</html>
