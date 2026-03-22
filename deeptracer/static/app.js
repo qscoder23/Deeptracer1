@@ -6,83 +6,76 @@ const loadingCopies = [
     "正在生成更容易理解的修改建议。"
 ];
 
-const sampleCode = `import re
-import time
-from collections import defaultdict
+const sampleCode = `BOOKS = [
+    {"title": "Python 起步", "topic": "python", "pages": 180, "level": "beginner", "borrowed": 8},
+    {"title": "数据结构轻读", "topic": "algorithm", "pages": 240, "level": "intermediate", "borrowed": 5},
+    {"title": "可视化故事", "topic": "data", "pages": 210, "level": "beginner", "borrowed": 7},
+    {"title": "函数式思维", "topic": "python", "pages": 320, "level": "advanced", "borrowed": 3},
+    {"title": "图解排序", "topic": "algorithm", "pages": 190, "level": "beginner", "borrowed": 6},
+    {"title": "数据分析练习", "topic": "data", "pages": 280, "level": "intermediate", "borrowed": 4}
+]
 
 
-def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n - 1) + fibonacci(n - 2)
+def score_book(book):
+    score = book["borrowed"] * 2
+    if book["level"] == "beginner":
+        score += 3
+    if book["pages"] < 220:
+        score += 2
+    return score
 
 
-def normalize_line(line):
-    line = line.strip().lower()
-    line = re.sub(r"[^a-z0-9,\\s]", "", line)
-    return line
+def find_titles_for_topic(books, topic):
+    titles = []
+    for book in books:
+        if book["topic"] == topic:
+            titles.append(book["title"])
+    return titles
 
 
-def parse_records(text):
-    records = []
-    for raw_line in text.split("\\n"):
-        line = normalize_line(raw_line)
-        if not line:
-            continue
-        parts = [part.strip() for part in line.split(",")]
-        if len(parts) != 3:
-            continue
-        name, category, value = parts
-        if not value.isdigit():
-            continue
-        records.append({
-            "name": name,
-            "category": category,
-            "value": int(value)
-        })
-    return records
+def build_topic_summary(books):
+    summary = {}
+    for book in books:
+        topic = book["topic"]
+        if topic not in summary:
+            summary[topic] = {
+                "count": 0,
+                "pages": 0,
+                "score": 0,
+                "titles": find_titles_for_topic(books, topic)
+            }
+        summary[topic]["count"] += 1
+        summary[topic]["pages"] += book["pages"]
+        summary[topic]["score"] += score_book(book)
+    return summary
 
 
-def group_and_score(records):
-    grouped = defaultdict(list)
-    for record in records:
-        grouped[record["category"]].append(record["value"])
+def choose_focus_topic(summary):
+    best_topic = ""
+    best_score = -1
+    for topic, info in summary.items():
+        if info["score"] > best_score:
+            best_topic = topic
+            best_score = info["score"]
+    return best_topic, summary[best_topic]
 
-    result = {}
-    for category, values in grouped.items():
-        total = sum(values)
-        avg = total / len(values)
-        score = fibonacci(min(len(values) + 8, 20))
-        result[category] = {
-            "count": len(values),
-            "total": total,
-            "avg": round(avg, 2),
-            "score": score
-        }
-    return result
+
+def explain_focus(topic, info):
+    avg_pages = info["pages"] // info["count"]
+    return {
+        "topic": topic,
+        "count": info["count"],
+        "avg_pages": avg_pages,
+        "titles": info["titles"]
+    }
 
 
 def main():
-    data = """
-    Alice, Books, 12
-    Bob, Books, 18
-    Cathy, Games, 31
-    David, Books, 25
-    Eva, Games, 22
-    Frank, Music, 15
-    Gina, Music, 17
-    Helen, Games, 28
-    Ivan, Books, 14
-    Jack, Music, 19
-    Invalid, Row
-    Mike, Games, xx
-    """
-    start = time.perf_counter()
-    records = parse_records(data)
-    summary = group_and_score(records)
-    elapsed = time.perf_counter() - start
-    print(summary)
-    print(f"Elapsed: {elapsed:.6f}s")
+    summary = build_topic_summary(BOOKS)
+    focus_topic, focus_info = choose_focus_topic(summary)
+    result = explain_focus(focus_topic, focus_info)
+    print("summary:", summary)
+    print("focus:", result)
 
 
 if __name__ == "__main__":
@@ -93,8 +86,8 @@ const demoData = {
     heroMetrics: [
         { label: "分析对象", value: "示例代码", note: "可以直接替换成你自己的代码" },
         { label: "代码行数", value: "64", note: "输入框里的内容会参与分析" },
-        { label: "重点函数", value: "group_and_score", note: "按结构复杂度排序" },
-        { label: "执行耗时", value: "18.4 ms", note: "真实分析后会刷新这里的数据" }
+        { label: "重点函数", value: "build_topic_summary", note: "按结构复杂度排序" },
+        { label: "分析环境", value: "Python 3.11", note: "执行可视化会自动切到兼容模式" }
     ],
     analysisMap: {
         workflow: {
@@ -118,13 +111,13 @@ const demoData = {
             summary: "帮助你快速看懂代码是不是过长、过绕，或者职责不清。",
             cards: [
                 { label: "函数数量", value: "5" },
-                { label: "重点函数", value: "group_and_score" },
+                { label: "重点函数", value: "build_topic_summary" },
                 { label: "输出语句", value: "2" }
             ],
             bars: [
-                { label: "group_and_score", value: 72 },
-                { label: "parse_records", value: 66 },
-                { label: "fibonacci", value: 40 }
+                { label: "build_topic_summary", value: 74 },
+                { label: "find_titles_for_topic", value: 58 },
+                { label: "choose_focus_topic", value: 33 }
             ],
             points: [
                 "如果一个函数承担了太多事情，先拆小通常最容易读懂。",
@@ -136,14 +129,14 @@ const demoData = {
             title: "性能",
             summary: "不是为了炫技，只是帮你先找到哪里最慢。",
             cards: [
-                { label: "执行耗时", value: "18.4 ms" },
-                { label: "热点函数", value: "fibonacci" },
-                { label: "热点数量", value: "3" }
+                { label: "分析环境", value: "Python 3.11" },
+                { label: "热点函数", value: "find_titles_for_topic" },
+                { label: "热点数量", value: "2" }
             ],
             bars: [
-                { label: "fibonacci", value: 82 },
-                { label: "group_and_score", value: 11 },
-                { label: "parse_records", value: 7 }
+                { label: "find_titles_for_topic", value: 63 },
+                { label: "build_topic_summary", value: 24 },
+                { label: "choose_focus_topic", value: 13 }
             ],
             points: [
                 "如果一段代码很慢，先看热点，再决定是否优化。",
@@ -173,19 +166,19 @@ const demoData = {
     suggestions: [
         {
             id: "split-parser",
-            title: "把 parse_records 再拆成两步会更清楚",
+            title: "把 build_topic_summary 里的重复扫描收一收",
             priority: "优先看看",
             confidence: "高",
             impact: "更容易理解",
             risk: "低",
             file: "当前代码",
-            note: "清洗、校验和组装记录目前放在了同一个函数里。",
-            explanation: "如果你刚开始学 Python，最重要的不是追求复杂写法，而是让每个函数只负责一件比较清楚的事情。",
+            note: "现在每遇到一个 topic，都会再扫一遍整份书单来找标题。",
+            explanation: "这段示例很适合展示结构分析和执行可视化，但如果继续扩展数据量，重复扫描会让主流程变慢。先把标题收集和统计放到同一轮循环里，会更清楚也更省步骤。",
             diff: [
-                [1, " ", "def parse_records(text):", "context"],
-                [2, "-", "    records = []", "remove"],
-                [2, "+", "    rows = split_rows(text)", "add"],
-                [3, "+", "    return build_records(rows)", "add"]
+                [1, " ", "def build_topic_summary(books):", "context"],
+                [2, "-", "            \"titles\": find_titles_for_topic(books, topic)", "remove"],
+                [2, "+", "            \"titles\": []", "add"],
+                [3, "+", "        summary[topic][\"titles\"].append(book[\"title\"])", "add"]
             ]
         }
     ],
@@ -198,6 +191,9 @@ const demoData = {
 
 let dataStore = deepClone(demoData);
 let loadingTimer = null;
+let currentTutorVisualizer = null;
+let tutorConnectorRedrawQueued = false;
+let tutorConnectorTracking = false;
 
 const state = {
     theme: "mist",
@@ -209,6 +205,8 @@ const state = {
 
 const el = {
     sourceCode: document.getElementById("sourceCode"),
+    lineNumbers: document.getElementById("lineNumbers"),
+    lineCountBadge: document.getElementById("lineCountBadge"),
     statusText: document.getElementById("statusText"),
     summaryCards: document.getElementById("summaryCards"),
     tabSummary: document.getElementById("tabSummary"),
@@ -221,7 +219,11 @@ const el = {
     diffLines: document.getElementById("diffLines"),
     loadingOverlay: document.getElementById("loadingOverlay"),
     loadingText: document.getElementById("loadingText"),
-    runAnalysis: document.getElementById("runAnalysis")
+    runAnalysis: document.getElementById("runAnalysis"),
+    tutorStatus: document.getElementById("tutorStatus"),
+    syncTutor: document.getElementById("syncTutor"),
+    tutorVisualizerMount: document.getElementById("tutorVisualizerMount"),
+    tutorPlaceholder: document.getElementById("tutorPlaceholder")
 };
 
 function deepClone(value) {
@@ -248,6 +250,80 @@ function setStatus(text) {
 function setTheme(theme) {
     state.theme = theme;
     document.body.dataset.theme = theme;
+}
+
+function updateLineNumbers() {
+    const lineCount = Math.max(1, el.sourceCode.value.split("\n").length);
+    const lines = [];
+    for (let index = 1; index <= lineCount; index += 1) {
+        lines.push(String(index));
+    }
+    el.lineNumbers.value = lines.join("\n");
+    el.lineCountBadge.textContent = `${lineCount} 行`;
+}
+
+function syncLineNumberScroll() {
+    el.lineNumbers.scrollTop = el.sourceCode.scrollTop;
+}
+
+function resetTutorSurface() {
+    currentTutorVisualizer = null;
+    tutorConnectorRedrawQueued = false;
+    tutorConnectorTracking = false;
+    delete el.tutorVisualizerMount.dataset.connectorBindingsReady;
+    el.tutorVisualizerMount.hidden = true;
+    el.tutorVisualizerMount.innerHTML = "";
+    el.tutorPlaceholder.hidden = false;
+}
+
+function queueTutorConnectorRedraw() {
+    if (!currentTutorVisualizer || typeof currentTutorVisualizer.redrawConnectors !== "function") {
+        return;
+    }
+    if (tutorConnectorRedrawQueued) {
+        return;
+    }
+
+    tutorConnectorRedrawQueued = true;
+    window.requestAnimationFrame(() => {
+        tutorConnectorRedrawQueued = false;
+        if (!currentTutorVisualizer || typeof currentTutorVisualizer.redrawConnectors !== "function") {
+            return;
+        }
+        currentTutorVisualizer.redrawConnectors();
+    });
+}
+
+function redrawTutorConnectorsImmediate() {
+    if (!currentTutorVisualizer || typeof currentTutorVisualizer.redrawConnectors !== "function") {
+        return;
+    }
+
+    tutorConnectorRedrawQueued = false;
+    currentTutorVisualizer.redrawConnectors();
+}
+
+function startTutorConnectorTracking() {
+    if (tutorConnectorTracking) {
+        return;
+    }
+    tutorConnectorTracking = true;
+    redrawTutorConnectorsImmediate();
+
+    const tick = () => {
+        if (!tutorConnectorTracking) {
+            return;
+        }
+        redrawTutorConnectorsImmediate();
+        window.requestAnimationFrame(tick);
+    };
+
+    window.requestAnimationFrame(tick);
+}
+
+function stopTutorConnectorTracking() {
+    tutorConnectorTracking = false;
+    redrawTutorConnectorsImmediate();
 }
 
 function renderSummaryCards() {
@@ -414,6 +490,141 @@ function setLoading(loading) {
     }, 1200);
 }
 
+function sanitizeTutorCode(code) {
+    const unsupportedImports = ["numpy", "pandas", "matplotlib", "networkx", "sklearn", "torch", "tensorflow"];
+    const lines = code.split("\n");
+    const sanitized = [];
+    let removedSomething = false;
+
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("import ")) {
+            const modules = trimmed.replace("import ", "").split(",").map((item) => item.trim());
+            const supported = modules.filter((item) => !unsupportedImports.includes(item));
+            if (!supported.length) {
+                removedSomething = true;
+                return;
+            }
+            if (supported.length !== modules.length) {
+                removedSomething = true;
+            }
+            sanitized.push(`import ${supported.join(", ")}`);
+            return;
+        }
+
+        if (trimmed.startsWith("from ")) {
+            const moduleName = trimmed.split(/\s+/)[1];
+            if (unsupportedImports.includes(moduleName)) {
+                removedSomething = true;
+                return;
+            }
+        }
+
+        sanitized.push(line);
+    });
+
+    return {
+        code: sanitized.join("\n"),
+        changed: removedSomething
+    };
+}
+
+function getTutorInputFromEditor() {
+    const code = el.sourceCode.value.trim();
+    if (!code) {
+        return null;
+    }
+
+    const tutorInput = sanitizeTutorCode(code);
+    el.tutorStatus.textContent = tutorInput.changed
+        ? "已自动简化 Python Tutor 不支持的第三方依赖，保留的是可执行演示版本。"
+        : "当前代码会直接在页内执行可视化面板中展示。";
+    return tutorInput;
+}
+
+function styleTutorVisualizer() {
+    const root = el.tutorVisualizerMount;
+    if (!root) {
+        return;
+    }
+
+    root.querySelectorAll("#editCodeLinkDiv").forEach((node) => {
+        node.remove();
+    });
+    root.querySelectorAll("#codeFooterDocs").forEach((node) => {
+        node.remove();
+    });
+
+    if (root.dataset.connectorBindingsReady === "true") {
+        return;
+    }
+    root.dataset.connectorBindingsReady = "true";
+
+    root.querySelectorAll("#pyCodeOutputDiv, #dataViz, #codAndNav").forEach((node) => {
+        node.addEventListener("scroll", redrawTutorConnectorsImmediate, { passive: true });
+        node.addEventListener("pointerdown", startTutorConnectorTracking, { passive: true });
+        node.addEventListener("pointermove", redrawTutorConnectorsImmediate, { passive: true });
+        node.addEventListener("pointerup", stopTutorConnectorTracking, { passive: true });
+        node.addEventListener("pointercancel", stopTutorConnectorTracking, { passive: true });
+        node.addEventListener("wheel", redrawTutorConnectorsImmediate, { passive: true });
+    });
+
+    window.addEventListener("pointerup", stopTutorConnectorTracking, { passive: true });
+    window.addEventListener("pointercancel", stopTutorConnectorTracking, { passive: true });
+}
+
+async function syncTutorView() {
+    const tutorInput = getTutorInputFromEditor();
+    if (!tutorInput) {
+        el.tutorStatus.textContent = "请先输入代码，再同步执行可视化。";
+        resetTutorSurface();
+        return;
+    }
+
+    try {
+        if (typeof window.addVisualizerToPage !== "function") {
+            throw new Error("Python Tutor 前端资源还没准备好，请稍后再试");
+        }
+
+        const response = await fetch("/api/tutor/trace", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                code: tutorInput.code,
+                options: {
+                    cumulative_mode: false,
+                    heap_primitives: false
+                }
+            })
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.detail || "执行可视化生成失败");
+        }
+
+        el.tutorPlaceholder.hidden = true;
+        el.tutorVisualizerMount.hidden = false;
+        el.tutorVisualizerMount.innerHTML = "";
+
+        currentTutorVisualizer = window.addVisualizerToPage(payload, "tutorVisualizerMount", {
+            embeddedMode: false,
+            verticalStack: false,
+            startingInstruction: 0,
+            codeDivWidth: 520,
+            codeDivHeight: 560
+        });
+
+        styleTutorVisualizer();
+        queueTutorConnectorRedraw();
+        el.tutorStatus.textContent = "执行可视化已同步。左侧显示源代码，右侧可以按步骤查看变量、调用栈和对象状态。";
+    } catch (error) {
+        console.error(error);
+        resetTutorSurface();
+        el.tutorStatus.textContent = `执行可视化加载失败：${error.message}`;
+    }
+}
+
 async function runAnalysis() {
     const code = el.sourceCode.value.trim();
     if (!code) {
@@ -438,6 +649,11 @@ async function runAnalysis() {
 
         applyPayload(payload);
         setStatus(buildAnalysisStatus(payload.meta || {}));
+        try {
+            await syncTutorView();
+        } catch (tutorError) {
+            console.error(tutorError);
+        }
     } catch (error) {
         console.error(error);
         setStatus(`分析失败：${error.message}`);
@@ -451,8 +667,11 @@ function loadSample() {
     dataStore = deepClone(demoData);
     state.activeTab = "workflow";
     state.activeSuggestion = demoData.suggestions[0].id;
+    updateLineNumbers();
+    syncLineNumberScroll();
     renderAll();
-    setStatus("示例已载入。点击“分析代码”查看真实结果。");
+    setStatus("示例已载入。这段代码同时适合结构分析、多智能体建议和执行可视化演示。");
+    void syncTutorView();
 }
 
 function clearCode() {
@@ -460,8 +679,12 @@ function clearCode() {
     dataStore = deepClone(demoData);
     state.activeTab = "workflow";
     state.activeSuggestion = demoData.suggestions[0].id;
+    updateLineNumbers();
+    syncLineNumberScroll();
     renderAll();
     setStatus("输入框已清空。");
+    el.tutorStatus.textContent = "分析环境是 Python 3.11。点击“分析代码”后，当前代码会直接显示在页内可视化区域。";
+    resetTutorSurface();
 }
 
 function bind() {
@@ -473,6 +696,14 @@ function bind() {
     document.getElementById("loadSample").addEventListener("click", loadSample);
     document.getElementById("clearCode").addEventListener("click", clearCode);
     document.getElementById("runAnalysis").addEventListener("click", runAnalysis);
+    el.syncTutor.addEventListener("click", syncTutorView);
+
+    el.sourceCode.addEventListener("input", () => {
+        updateLineNumbers();
+        el.tutorStatus.textContent = "代码已更新。点“分析代码”或“刷新可视化”后，会在当前页内重新生成执行步骤。";
+    });
+
+    el.sourceCode.addEventListener("scroll", syncLineNumberScroll);
 
     document.getElementById("resultTabs").addEventListener("click", (event) => {
         const button = event.target.closest("button[data-tab]");
