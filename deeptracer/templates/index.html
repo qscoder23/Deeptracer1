@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deeptracer | Python 分析助手</title>
+    <title>DeepTracer | Python 分析助手</title>
     <meta
         name="description"
         content="直接粘贴 Python 代码，快速查看结构、性能、内存和更容易理解的修改建议。"
@@ -14,7 +14,7 @@
     <div class="page-shell">
         <header class="topbar">
             <div>
-                <p class="eyebrow">Python 分析助手</p>
+                <p class="brand-mark">DeepTracer</p>
                 <h1>把代码贴进来，然后开始分析</h1>
                 <p class="subtitle">不用先找文件，也不用调很多参数。先看懂代码，再决定要不要修改。</p>
             </div>
@@ -22,28 +22,61 @@
         </header>
 
         <main class="layout">
-            <section class="panel editor-panel">
-                <div class="panel-header">
-                    <div>
-                        <h2>输入代码</h2>
-                        <p>支持直接粘贴 Python 代码，也可以先载入一个示例。</p>
+            <div class="left-column">
+                <section class="panel editor-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>输入代码</h2>
+                            <p>支持直接粘贴 Python 代码，也可以先载入一个示例。</p>
+                        </div>
+                        <div class="button-row">
+                            <button class="ghost-button" id="loadSample" type="button">载入示例</button>
+                            <button class="ghost-button" id="clearCode" type="button">清空</button>
+                            <button class="primary-button" id="runAnalysis" type="button">分析代码</button>
+                        </div>
                     </div>
-                    <div class="button-row">
-                        <button class="ghost-button" id="loadSample" type="button">载入示例</button>
-                        <button class="ghost-button" id="clearCode" type="button">清空</button>
-                        <button class="primary-button" id="runAnalysis" type="button">分析代码</button>
+
+                    <label class="editor-box">
+                        <div class="editor-heading">
+                            <span>Python 代码</span>
+                            <span class="line-count-badge" id="lineCountBadge">1 行</span>
+                        </div>
+                        <div class="editor-shell">
+                            <textarea class="line-numbers" id="lineNumbers" aria-hidden="true" readonly>1</textarea>
+                            <textarea id="sourceCode" spellcheck="false" placeholder="把你的 Python 代码粘贴到这里..."></textarea>
+                        </div>
+                    </label>
+
+                    <div class="helper-line">
+                        <span id="statusText">可以先点“载入示例”，也可以直接粘贴你自己的代码。</span>
                     </div>
-                </div>
+                </section>
 
-                <label class="editor-box">
-                    <span>Python 代码</span>
-                    <textarea id="sourceCode" spellcheck="false" placeholder="把你的 Python 代码粘贴到这里..."></textarea>
-                </label>
+                <section class="panel tutor-panel">
+                    <div class="panel-header compact tutor-head">
+                        <div>
+                            <h2>执行可视化</h2>
+                            <p>分析运行环境使用 Python 3.11。为保证可视化稳定，这里接入的是 Python Tutor 兼容执行视图。</p>
+                        </div>
+                        <div class="button-row">
+                            <button class="ghost-button" id="syncTutor" type="button">刷新可视化</button>
+                        </div>
+                    </div>
 
-                <div class="helper-line">
-                    <span id="statusText">可以先点击“载入示例”，也可以直接粘贴你自己的代码。</span>
-                </div>
-            </section>
+                    <div class="tutor-stage">
+                        <div class="tutor-placeholder" id="tutorPlaceholder">
+                            <div class="tutor-badge">Python Tutor</div>
+                            <h3>这里会显示源代码和执行过程</h3>
+                            <p>主输入区里的代码会直接同步到这里。左边看源代码，右边按步骤查看变量、调用栈和对象状态。</p>
+                        </div>
+                        <div class="tutor-visualizer" id="tutorVisualizerMount" hidden></div>
+                    </div>
+
+                    <div class="helper-line tutor-note">
+                        <span id="tutorStatus">分析环境是 Python 3.11。点击“分析代码”后，当前代码会直接在页内执行可视化模块中展示。</span>
+                    </div>
+                </section>
+            </div>
 
             <section class="panel results-panel">
                 <div class="panel-header">
@@ -110,6 +143,7 @@
     </div>
 
     <noscript>请开启 JavaScript 以获得完整体验。</noscript>
+    <script src="/tutor-assets/build/pytutor-embed.bundle.js?d7b0418262" charset="utf-8" defer></script>
     <script src="{{ url_for('static', path='app.js') }}" defer></script>
 </body>
 </html>
